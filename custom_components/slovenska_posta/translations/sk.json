@@ -1,0 +1,148 @@
+{
+  "title": "Slovenská Pošta",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Nastaviť Slovenskú Poštu",
+        "description": "Sledovanie Slovenskej Pošty nevyžaduje účet ani PSČ — hub sa vytvorí ihneď. Zásielky pridáte neskôr cez možnosti integrácie alebo službu `slovenska_posta.track_parcel`."
+      }
+    },
+    "abort": {
+      "already_configured": "Slovenská Pošta je už nastavená."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Možnosti Slovenskej Pošty",
+        "menu_options": {
+          "parcels": "Spravovať zásielky",
+          "settings": "Nastavenia"
+        },
+        "sections": {
+          "parcels": {
+            "name": "Zásielky",
+            "data": {
+              "add": "Pridať zásielku",
+              "remove": "Odstrániť zásielky"
+            },
+            "data_description": {
+              "add": "Zadajte podacie číslo Slovenskej Pošty na začatie sledovania. Nájdete ho na potvrdení o odoslaní alebo na oznámení o nedoručení."
+            }
+          },
+          "delivered": {
+            "name": "Doručené zásielky",
+            "data": {
+              "delivered_filter_type": "Filtrovať podľa",
+              "delivered_filter_amount": "Počet"
+            },
+            "data_description": {
+              "delivered_filter_type": "Zobraziť doručené zásielky za posledných X dní, alebo obmedziť na X najnovších.",
+              "delivered_filter_amount": "Počet dní alebo zásielok na zobrazenie."
+            }
+          },
+          "history": {
+            "name": "História zásielky",
+            "data": {
+              "include_history": "Zahrnúť históriu stavov"
+            },
+            "data_description": {
+              "include_history": "Pridá k zásielke atribút histórie so zoznamom všetkých zmien stavu (čas, stav, pôvodný text). Predvolene vypnuté."
+            }
+          }
+        }
+      },
+      "parcels": {
+        "title": "Spravovať zásielky",
+        "data": {
+          "tracking_codes": "Podacie čísla"
+        }
+      },
+      "settings": {
+        "title": "Nastavenia",
+        "data": {
+          "delivered_filter_type": "Doručené zásielky: filtrovať podľa",
+          "delivered_filter_amount": "Doručené zásielky: počet",
+          "include_history": "Zahrnúť históriu stavov"
+        }
+      }
+    },
+    "error": {
+      "invalid_tracking_code": "Toto nevyzerá ako podacie číslo Slovenskej Pošty.",
+      "already_tracked": "Táto zásielka sa už sleduje."
+    }
+  },
+  "selector": {
+    "delivered_filter_type": {
+      "options": {
+        "days": "Dni",
+        "parcels": "Počet zásielok"
+      }
+    }
+  },
+  "services": {
+    "track_parcel": {
+      "name": "Sledovať zásielku",
+      "description": "Začať sledovať zásielku podľa podacieho čísla Slovenskej Pošty.",
+      "fields": {
+        "tracking_code": {
+          "name": "Podacie číslo",
+          "description": "Podacie číslo Slovenskej Pošty."
+        }
+      }
+    },
+    "untrack_parcel": {
+      "name": "Prestať sledovať zásielku",
+      "description": "Prestať sledovať zásielku podľa podacieho čísla Slovenskej Pošty.",
+      "fields": {
+        "tracking_code": {
+          "name": "Podacie číslo",
+          "description": "Podacie číslo Slovenskej Pošty, ktoré sa má prestať sledovať."
+        }
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "parcel_registered": "Zásielka bola zaregistrovaná",
+      "parcel_status_changed": "Stav zásielky sa zmenil",
+      "parcel_delivered": "Zásielka bola doručená",
+      "parcel_delivery_time_changed": "Očakávaný čas doručenia zásielky sa zmenil"
+    }
+  },
+  "entity": {
+    "button": {
+      "refresh": {
+        "name": "Obnoviť"
+      }
+    },
+    "calendar": {
+      "deliveries": {
+        "name": "Doručenia"
+      }
+    },
+    "sensor": {
+      "incoming_parcels": {
+        "name": "Prichádzajúce zásielky",
+        "unit_of_measurement": "zásielok"
+      },
+      "awaiting_pickup": {
+        "name": "Pripravené na vyzdvihnutie",
+        "unit_of_measurement": "zásielok"
+      },
+      "next_delivery": {
+        "name": "Najbližšie doručenie"
+      },
+      "delivered_parcels": {
+        "name": "Doručené zásielky",
+        "unit_of_measurement": "zásielok"
+      },
+      "last_update": {
+        "name": "Posledná úspešná aktualizácia"
+      },
+      "parcel": {
+        "name": "Zásielka {barcode}"
+      }
+    }
+  }
+}

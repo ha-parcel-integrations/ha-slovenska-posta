@@ -1,0 +1,16 @@
+{
+  "domain": "slovenska_posta",
+  "name": "Slovensk\u00e1 Po\u0161ta",
+  "codeowners": [
+    "@peternijssen"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/ha-parcel-integrations/ha-slovenska-posta",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/ha-parcel-integrations/ha-slovenska-posta/issues",
+  "quality_scale": "silver",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "1.0.0"
+}
