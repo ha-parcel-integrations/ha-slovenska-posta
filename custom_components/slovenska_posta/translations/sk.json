@@ -16,7 +16,7 @@
       "init": {
         "title": "Možnosti Slovenskej Pošty",
         "menu_options": {
-          "parcels": "Spravovať zásielky",
+          "parcels": "Zásielky",
           "settings": "Nastavenia"
         },
         "sections": {

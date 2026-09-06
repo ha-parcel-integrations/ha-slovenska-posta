@@ -118,8 +118,8 @@ request (chunked above that). No account, no per-parcel HTTP round trip.
 
 ## Options and reloads
 
-For code-based carriers, the options flow starts with exactly `Pakketten` and
-`Instellingen`. `Pakketten` is one editable multi-code list; `Instellingen` is
+For code-based carriers, the options flow starts with exactly `Parcels` and
+`Settings`. `Parcels` is one editable multi-code list; `Settings` is
 a flat form. Changes apply without a restart. Two models, **do not mix them**:
 - **Account-less carriers** (the default) apply changes live: an update listener
   calls `async_request_refresh()`, so added/removed parcel sensors appear
