@@ -157,6 +157,12 @@ class SlovenskaPostaCoordinator(DataUpdateCoordinator[list[dict]]):
         # Not used for a genuine "not found"/empty-history reply — that's a
         # fresh, real signal, not a failure to paper over.
         self._raw_cache: dict[str, dict] = {}
+        # Tracking codes confirmed delivered on a prior refresh — excluded
+        # from the batch fetch this cycle since a delivered parcel's payload
+        # can never change again. Keyed on the code the request was made
+        # with, not the barcode. Lives for the integration's lifetime
+        # (resets on restart).
+        self._delivered_codes: set[str] = set()
         # Consecutive 429 responses across all tracked parcels, for the
         # exponential backoff in Section 3. Reset to 0 on any success.
         self._consecutive_429 = 0
@@ -182,6 +188,11 @@ class SlovenskaPostaCoordinator(DataUpdateCoordinator[list[dict]]):
     def current_tier_minutes(self) -> int | None:
         """Tier minutes computed on the last refresh (diagnostics only)."""
         return self._current_tier_minutes
+
+    @property
+    def delivered_codes(self) -> set[str]:
+        """Tracking codes currently skipped from the fetch (diagnostics only)."""
+        return self._delivered_codes
 
     def _device_id(self) -> str | None:
         """Resolve (and cache) this entry's device id for event payloads."""
@@ -225,10 +236,16 @@ class SlovenskaPostaCoordinator(DataUpdateCoordinator[list[dict]]):
         self._raw_cache = {
             code: raw for code, raw in self._raw_cache.items() if code in tracked_codes
         }
+        self._delivered_codes &= tracked_codes
+
+        # A delivered parcel's payload can never change again, so it is
+        # dropped from the batch — not from ``codes``/the options list, which
+        # stays untouched until the user removes it by hand.
+        codes_to_fetch = [code for code in codes if code not in self._delivered_codes]
 
         fetched: dict[str, dict] | None = None
         try:
-            fetched = await self._client.async_get_parcels(codes)
+            fetched = await self._client.async_get_parcels(codes_to_fetch)
         except (SlovenskaPostaApiError, aiohttp.ClientError) as err:
             if isinstance(err, SlovenskaPostaApiError) and err.status_code == 429:
                 # A 429 means the whole poll backs off — one hot parcel's
@@ -246,16 +263,20 @@ class SlovenskaPostaCoordinator(DataUpdateCoordinator[list[dict]]):
         else:
             self._consecutive_429 = 0
 
-        raws: list[dict] = []
+        raws_by_code: dict[str, dict] = {}
         if fetched is None:
             # The whole batched request failed outright — fall back to
             # whatever cached data exists, no synthetic pending placeholders
             # (that would misrepresent an outage as "not yet trackable").
-            raws = [self._raw_cache[code] for code in codes if code in self._raw_cache]
-            errors = len(codes)
+            raws_by_code = {
+                code: self._raw_cache[code]
+                for code in codes_to_fetch
+                if code in self._raw_cache
+            }
+            errors = len(codes_to_fetch)
         else:
             errors = 0
-            for code in codes:
+            for code in codes_to_fetch:
                 result = fetched.get(code)
                 if result is None:
                     # A genuine "no history yet"/unknown code (or one the
@@ -263,21 +284,33 @@ class SlovenskaPostaCoordinator(DataUpdateCoordinator[list[dict]]):
                     # by the client) — keep prior data if we have it,
                     # otherwise show a pending placeholder so the user still
                     # sees the parcel they asked us to track.
-                    raws.append(self._raw_cache.get(code) or {"number": code})
+                    raws_by_code[code] = self._raw_cache.get(code) or {"number": code}
                     continue
                 result.setdefault("number", code)
                 self._raw_cache[code] = result
-                raws.append(result)
+                raws_by_code[code] = result
 
-        if codes and errors == len(codes) and not raws:
+        # Codes skipped from the batch above (already confirmed delivered) —
+        # re-add their cached payload so the delivered sensor keeps its data
+        # until the retention filter drops it.
+        for code in self._delivered_codes:
+            cached = self._raw_cache.get(code)
+            if cached is not None:
+                raws_by_code[code] = cached
+
+        if codes_to_fetch and errors == len(codes_to_fetch) and not raws_by_code:
             raise UpdateFailed("Slovenská Pošta unreachable for all tracked parcels")
 
         include_history = self._include_history
-        normalized = [
-            normalize_parcel(raw, include_history=include_history) for raw in raws
+        entries = [
+            (code, normalize_parcel(raw, include_history=include_history))
+            for code, raw in raws_by_code.items()
         ]
-        active = [parcel for parcel in normalized if not parcel["delivered"]]
-        delivered = [parcel for parcel in normalized if parcel["delivered"]]
+        active = [parcel for _, parcel in entries if not parcel["delivered"]]
+        delivered = [parcel for _, parcel in entries if parcel["delivered"]]
+        # Rebuilt fresh from this cycle's data — a code whose payload just
+        # flipped to delivered is skipped starting next cycle.
+        self._delivered_codes = {code for code, parcel in entries if parcel["delivered"]}
 
         self.delivered = apply_delivered_filter(
             sort_parcels_by_ts(delivered, "delivered_at", descending=True),
@@ -301,9 +334,9 @@ class SlovenskaPostaCoordinator(DataUpdateCoordinator[list[dict]]):
         }
 
         # Only stamp the diagnostic timestamp when at least one fetch actually
-        # succeeded (or nothing is tracked) — a poll served entirely from cache
-        # must not present itself as a successful update.
-        if not codes or errors < len(codes):
+        # succeeded (or nothing needed fetching) — a poll served entirely from
+        # cache must not present itself as a successful update.
+        if not codes_to_fetch or errors < len(codes_to_fetch):
             self.last_success_time = datetime.now(timezone.utc)
 
         now = dt_util.now()

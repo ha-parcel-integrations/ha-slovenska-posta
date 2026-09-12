@@ -80,6 +80,44 @@ async def test_update_merges_multiple_parcels(hass):
     assert coordinator.last_success_time is not None
 
 
+async def test_delivered_code_skipped_from_fetch(hass):
+    """A delivered code stops being fetched from the next cycle on."""
+    entry = _entry_with(
+        [{CONF_TRACKING_CODE: ACTIVE_CODE}, {CONF_TRACKING_CODE: DELIVERED_CODE}]
+    )
+    entry.add_to_hass(hass)
+    client = _batch(
+        {ACTIVE_CODE: active_sample(), DELIVERED_CODE: delivered_sample()}
+    )
+    coordinator = SlovenskaPostaCoordinator(hass, client, entry)
+
+    await coordinator._async_update_data()
+    client.async_get_parcels.assert_awaited_with([ACTIVE_CODE, DELIVERED_CODE])
+    assert coordinator.delivered_codes == {DELIVERED_CODE}
+
+    data = await coordinator._async_update_data()
+
+    # Only the still-active code is fetched — the delivered one is skipped.
+    client.async_get_parcels.assert_awaited_with([ACTIVE_CODE])
+    assert any(p["barcode"] == DELIVERED_CODE for p in coordinator.delivered)
+    assert data[0]["barcode"] == ACTIVE_CODE
+
+
+async def test_delivered_code_forgotten_when_untracked(hass):
+    """Untracking a delivered code drops it from the skip set too."""
+    entry = _entry_with([{CONF_TRACKING_CODE: DELIVERED_CODE}])
+    entry.add_to_hass(hass)
+    client = _batch({DELIVERED_CODE: delivered_sample()})
+    coordinator = SlovenskaPostaCoordinator(hass, client, entry)
+
+    await coordinator._async_update_data()
+    assert coordinator.delivered_codes == {DELIVERED_CODE}
+
+    hass.config_entries.async_update_entry(entry, options={CONF_PARCELS: []})
+    await coordinator._async_update_data()
+    assert coordinator.delivered_codes == set()
+
+
 async def test_update_batches_all_codes_in_one_call(hass):
     """All tracked parcels go out in one batched q= call, not one per code."""
     entry = _entry_with(
@@ -189,9 +227,12 @@ async def test_update_prunes_cache_for_untracked_parcels(hass):
 
 async def test_cache_only_poll_does_not_stamp_last_success(hass):
     """A poll served entirely from cache must not look like a success."""
-    entry = _entry_with([{CONF_TRACKING_CODE: DELIVERED_CODE}])
+    # Must still be active (not delivered) — a delivered code is skipped from
+    # the fetch entirely from the next cycle on, which is covered separately
+    # by test_delivered_code_skipped_from_fetch.
+    entry = _entry_with([{CONF_TRACKING_CODE: ACTIVE_CODE}])
     entry.add_to_hass(hass)
-    client = _batch({DELIVERED_CODE: delivered_sample()})
+    client = _batch({ACTIVE_CODE: active_sample()})
     coordinator = SlovenskaPostaCoordinator(hass, client, entry)
     await coordinator._async_update_data()
     stamp = coordinator.last_success_time
