@@ -96,8 +96,8 @@ request (chunked above that). No account, no per-parcel HTTP round trip.
   gets) but stay empty/silent here.
 - **Tracking-code format is intentionally unvalidated locally.** The manual
   doesn't document a code shape, so `config_flow.py`'s `valid_tracking_code`
-  is a generic 8–20 character length cap plus a control-character reject —
-  not a guessed prefix/checksum rule. The live check above is what actually
+  accepts any non-empty code (control characters aside — stripped as garbage
+  bytes, not a format-shape gate). The live check above is what actually
   enforces the real shape, deferring to the carrier instead of a local guess.
 - **`AT_PICKUP_POINT` is reachable** (`notified` → post-office hold), so this
   carrier has the suite's standard `awaiting_pickup` sensor.

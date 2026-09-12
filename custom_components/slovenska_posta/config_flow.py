@@ -33,14 +33,12 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 # The carrier's tracking-code format is not documented by the manual and was
-# not established from the two live samples (redacted, not retained) — so
-# this is deliberately a conservative length cap plus a control-character
-# reject, not a guessed prefix/checksum rule. Real format enforcement happens
-# live: newly added codes are checked against the API itself in
-# async_step_parcels below, which is what actually knows the shape.
+# not established from the two live samples (redacted, not retained). Real
+# format enforcement happens live: newly added codes are checked against the
+# API itself in async_step_parcels below, which is what actually knows the
+# shape. Locally we only strip control characters — garbage bytes, not a
+# format-shape gate — never reject on length or charset.
 _CONTROL_CHAR_RE = re.compile(r"[\x00-\x1f\x7f]")
-_MIN_CODE_LENGTH = 8
-_MAX_CODE_LENGTH = 20
 
 
 def normalize_tracking_code(value: str) -> str:
@@ -56,15 +54,12 @@ def normalize_tracking_code(value: str) -> str:
 def valid_tracking_code(value: str) -> bool:
     """Whether ``value`` is a plausible tracking code, format unknown.
 
-    A conservative length cap (8-20 characters) and a control-character
-    reject — permissive on purpose so a real code is never rejected here.
-    The carrier's own answer (via a live lookup) is the actual authority.
+    Accepts any non-empty code once control characters are rejected — the
+    carrier's real formats vary too much and aren't fully documented to gate
+    on shape client-side. The carrier's own answer (via a live lookup) is the
+    actual authority.
     """
-    return (
-        bool(value)
-        and _MIN_CODE_LENGTH <= len(value) <= _MAX_CODE_LENGTH
-        and not _CONTROL_CHAR_RE.search(value)
-    )
+    return bool(value) and not _CONTROL_CHAR_RE.search(value)
 
 
 def _current_parcels(entry: ConfigEntry) -> list[dict[str, str]]:

@@ -30,10 +30,10 @@ def test_normalize_tracking_code_trims_only():
     assert normalize_tracking_code(None) == ""
 
 
-def test_valid_tracking_code_bounds():
+def test_valid_tracking_code_accepts_any_non_empty_code():
     assert valid_tracking_code(CODE)
-    assert not valid_tracking_code("ABC")  # too short (< 8)
-    assert not valid_tracking_code("A" * 21)  # too long (> 20)
+    assert valid_tracking_code("ABC")
+    assert not valid_tracking_code("")
     assert not valid_tracking_code("bad\x00code")  # control character
 
 
@@ -117,11 +117,12 @@ async def test_options_add_parcel_trims_whitespace(hass):
 
 
 async def test_options_add_invalid_tracking_code(hass):
+    """A control character is the only thing still rejected locally."""
     entry = _hub([])
     entry.add_to_hass(hass)
     result = await _open_options_step(hass, entry, "parcels")
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"tracking_codes": ["abc"]}
+        result["flow_id"], {"tracking_codes": ["bad\x00code"]}
     )
     assert result["errors"]["base"] == "invalid_tracking_code"
 
