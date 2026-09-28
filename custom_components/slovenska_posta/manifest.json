@@ -2,7 +2,7 @@
   "domain": "slovenska_posta",
   "name": "Slovensk\u00e1 Po\u0161ta",
   "codeowners": [
-    "@peternijssen"
+    "@peter-mdf"
   ],
   "config_flow": true,
   "documentation": "https://github.com/ha-parcel-integrations/ha-slovenska-posta",
