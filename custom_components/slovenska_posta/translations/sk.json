@@ -113,7 +113,7 @@
   "entity": {
     "button": {
       "refresh": {
-        "name": "Obnoviť"
+        "name": "Aktualizovať"
       }
     },
     "calendar": {
@@ -124,18 +124,18 @@
     "sensor": {
       "incoming_parcels": {
         "name": "Prichádzajúce zásielky",
-        "unit_of_measurement": "zásielok"
+        "unit_of_measurement": "zásielky"
       },
       "awaiting_pickup": {
         "name": "Pripravené na vyzdvihnutie",
-        "unit_of_measurement": "zásielok"
+        "unit_of_measurement": "zásielky"
       },
       "next_delivery": {
-        "name": "Najbližšie doručenie"
+        "name": "Očakávané doručenie"
       },
       "delivered_parcels": {
         "name": "Doručené zásielky",
-        "unit_of_measurement": "zásielok"
+        "unit_of_measurement": "zásielky"
       },
       "last_update": {
         "name": "Posledná úspešná aktualizácia"
