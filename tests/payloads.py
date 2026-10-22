@@ -12,6 +12,7 @@ Keep samples in one module rather than inline in each test — when the
 payload shape turns out to be different from what was assumed, there is then
 exactly one place to fix.
 """
+
 from __future__ import annotations
 
 ACTIVE_CODE = "RR000000001SK"

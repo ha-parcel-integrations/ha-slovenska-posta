@@ -1,4 +1,5 @@
 """Tests for the Slovenská Pošta config and options flow."""
+
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 

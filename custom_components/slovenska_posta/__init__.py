@@ -1,8 +1,9 @@
 """Slovenská Pošta parcel tracker custom component for Home Assistant."""
+
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
+import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -27,7 +28,9 @@ class SlovenskaPostaData:
 type SlovenskaPostaConfigEntry = ConfigEntry[SlovenskaPostaData]
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: SlovenskaPostaConfigEntry) -> bool:
+async def async_setup_entry(
+    hass: HomeAssistant, entry: SlovenskaPostaConfigEntry
+) -> bool:
     """Set up Slovenská Pošta from a config entry."""
     # No auth: Slovenská Pošta tracking is public, so the HA-managed session is fine.
     client = SlovenskaPostaApiClient(async_get_clientsession(hass))
@@ -64,7 +67,9 @@ async def _async_options_updated(
     await entry.runtime_data.coordinator.async_request_refresh()
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: SlovenskaPostaConfigEntry) -> bool:
+async def async_unload_entry(
+    hass: HomeAssistant, entry: SlovenskaPostaConfigEntry
+) -> bool:
     """Unload the Slovenská Pošta config entry."""
     if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         return False

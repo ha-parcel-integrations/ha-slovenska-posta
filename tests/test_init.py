@@ -1,4 +1,5 @@
 """Tests for Slovenská Pošta setup and unload."""
+
 from unittest.mock import AsyncMock, patch
 
 from homeassistant.config_entries import ConfigEntryState
@@ -12,8 +13,7 @@ from custom_components.slovenska_posta.const import (
     DOMAIN,
 )
 
-from .payloads import ACTIVE_CODE
-from .payloads import active_sample as _sample
+from .payloads import ACTIVE_CODE, active_sample as _sample
 
 OTHER_CODE = "RR000000008SK"
 
@@ -76,7 +76,9 @@ async def test_setup_retries_when_first_refresh_fails(hass):
 
     with patch(
         "custom_components.slovenska_posta.api.SlovenskaPostaApiClient.async_get_parcels",
-        new=AsyncMock(side_effect=SlovenskaPostaApiError("Slovenská Pošta unreachable")),
+        new=AsyncMock(
+            side_effect=SlovenskaPostaApiError("Slovenská Pošta unreachable")
+        ),
     ):
         assert not await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
@@ -108,7 +110,8 @@ async def test_per_parcel_sensor_spawn_and_remove(hass):
         # The next poll returns a different tracking code: the summary sensor
         # spawns a new per-parcel sensor and removes the stale one.
         hass.config_entries.async_update_entry(
-            entry, options={**entry.options, CONF_PARCELS: [{CONF_TRACKING_CODE: OTHER_CODE}]}
+            entry,
+            options={**entry.options, CONF_PARCELS: [{CONF_TRACKING_CODE: OTHER_CODE}]},
         )
         await entry.runtime_data.coordinator.async_request_refresh()
         await hass.async_block_till_done()

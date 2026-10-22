@@ -1,4 +1,5 @@
 """Tests for Slovenská Pošta diagnostics."""
+
 from datetime import timedelta
 from unittest.mock import MagicMock
 
@@ -58,8 +59,7 @@ async def test_diagnostics_redacts_and_counts(hass):
     assert result["incoming"][0]["raw"]["number"] == "**REDACTED**"
     assert result["incoming"][0]["raw"]["events"][0]["postOffice"] == "**REDACTED**"
     assert (
-        result["incoming"][0]["raw"]["events"][0]["detailDescription"]
-        == "**REDACTED**"
+        result["incoming"][0]["raw"]["events"][0]["detailDescription"] == "**REDACTED**"
     )
     # non-identifying fields survive, or the diagnostics would be useless
     assert result["incoming"][0]["status"] == "at_pickup_point"

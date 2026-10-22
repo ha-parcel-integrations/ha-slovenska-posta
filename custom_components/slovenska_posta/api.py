@@ -18,6 +18,7 @@ unauthenticated too, but is undocumented, carries a different ``{parcels[]}``
 schema and is not the carrier-supported contract; nothing in this module
 should ever reference it.
 """
+
 from __future__ import annotations
 
 import logging

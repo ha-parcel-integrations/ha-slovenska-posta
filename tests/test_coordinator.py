@@ -5,8 +5,11 @@ no ETA field, so there is no ``delivery_time_changed`` coverage here — see
 ``test_parcels.py`` for the assertion that ``planned_from``/``planned_to``
 stay ``None`` always.
 """
+
 from unittest.mock import AsyncMock
 
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.update_coordinator import UpdateFailed
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -67,9 +70,7 @@ async def test_update_merges_multiple_parcels(hass):
         [{CONF_TRACKING_CODE: ACTIVE_CODE}, {CONF_TRACKING_CODE: DELIVERED_CODE}]
     )
     entry.add_to_hass(hass)
-    client = _batch(
-        {ACTIVE_CODE: active_sample(), DELIVERED_CODE: delivered_sample()}
-    )
+    client = _batch({ACTIVE_CODE: active_sample(), DELIVERED_CODE: delivered_sample()})
     coordinator = SlovenskaPostaCoordinator(hass, client, entry)
 
     data = await coordinator._async_update_data()
@@ -86,9 +87,7 @@ async def test_delivered_code_skipped_from_fetch(hass):
         [{CONF_TRACKING_CODE: ACTIVE_CODE}, {CONF_TRACKING_CODE: DELIVERED_CODE}]
     )
     entry.add_to_hass(hass)
-    client = _batch(
-        {ACTIVE_CODE: active_sample(), DELIVERED_CODE: delivered_sample()}
-    )
+    client = _batch({ACTIVE_CODE: active_sample(), DELIVERED_CODE: delivered_sample()})
     coordinator = SlovenskaPostaCoordinator(hass, client, entry)
 
     await coordinator._async_update_data()
@@ -124,9 +123,7 @@ async def test_update_batches_all_codes_in_one_call(hass):
         [{CONF_TRACKING_CODE: ACTIVE_CODE}, {CONF_TRACKING_CODE: DELIVERED_CODE}]
     )
     entry.add_to_hass(hass)
-    client = _batch(
-        {ACTIVE_CODE: active_sample(), DELIVERED_CODE: delivered_sample()}
-    )
+    client = _batch({ACTIVE_CODE: active_sample(), DELIVERED_CODE: delivered_sample()})
     coordinator = SlovenskaPostaCoordinator(hass, client, entry)
 
     await coordinator._async_update_data()
@@ -162,8 +159,6 @@ async def test_update_keeps_cached_payload_on_error(hass):
 
 
 async def test_update_raises_when_every_parcel_fails(hass):
-    from homeassistant.helpers.update_coordinator import UpdateFailed
-
     entry = _entry_with([{CONF_TRACKING_CODE: DELIVERED_CODE}])
     entry.add_to_hass(hass)
     client = AsyncMock()
@@ -271,8 +266,6 @@ async def test_first_refresh_fires_nothing(hass):
 
 
 async def test_event_carries_device_id(hass):
-    from homeassistant.helpers import device_registry as dr
-
     entry = _entry_with([{CONF_TRACKING_CODE: ACTIVE_CODE}])
     entry.add_to_hass(hass)
     device = dr.async_get(hass).async_get_or_create(
@@ -283,12 +276,12 @@ async def test_event_carries_device_id(hass):
     coordinator = SlovenskaPostaCoordinator(hass, client, entry)
 
     events = []
-    hass.bus.async_listen(
-        f"{DOMAIN}_parcel_status_changed", lambda e: events.append(e)
-    )
+    hass.bus.async_listen(f"{DOMAIN}_parcel_status_changed", lambda e: events.append(e))
 
     await coordinator._async_update_data()
-    client.async_get_parcels.side_effect = lambda codes: {ACTIVE_CODE: pickup_sample(ACTIVE_CODE)}
+    client.async_get_parcels.side_effect = lambda codes: {
+        ACTIVE_CODE: pickup_sample(ACTIVE_CODE)
+    }
     await coordinator._async_update_data()
     await hass.async_block_till_done()
 
@@ -302,13 +295,13 @@ async def test_fires_status_changed_event(hass):
     coordinator = SlovenskaPostaCoordinator(hass, client, entry)
 
     events = []
-    hass.bus.async_listen(
-        f"{DOMAIN}_parcel_status_changed", lambda e: events.append(e)
-    )
+    hass.bus.async_listen(f"{DOMAIN}_parcel_status_changed", lambda e: events.append(e))
 
     await coordinator._async_update_data()  # first refresh: suppressed
 
-    client.async_get_parcels.side_effect = lambda codes: {ACTIVE_CODE: pickup_sample(ACTIVE_CODE)}
+    client.async_get_parcels.side_effect = lambda codes: {
+        ACTIVE_CODE: pickup_sample(ACTIVE_CODE)
+    }
     await coordinator._async_update_data()
     await hass.async_block_till_done()
 
