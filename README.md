@@ -116,6 +116,7 @@ Standard HA removal applies: **Settings → Devices & Services → Slovenská Po
 | `sensor.slovenska_posta_parcel_<code>` | One per tracked parcel; state is the canonical status, attributes carry the full normalised parcel |
 | `sensor.slovenska_posta_next_delivery` | Earliest expected delivery moment across all active parcels |
 | `sensor.slovenska_posta_delivered_parcels` | Recently delivered parcels (see the retention option) |
+| `calendar.slovenska_posta_deliveries` | Read-only calendar of expected deliveries, no extra API calls |
 | `sensor.slovenska_posta_last_successful_update` | Diagnostic: when Slovenská Pošta was last polled successfully |
 
 A delivered parcel moves from its per-parcel sensor to the delivered sensor automatically.
@@ -180,7 +181,7 @@ logger:
 
 - **A parcel shows `unknown`** — Slovenská Pošta has not scanned it yet, or no longer retains its history. It will pick up automatically once scanned.
 - **Adding a parcel fails with "invalid tracking code"** — the carrier's own tracking lookup rejected the code as malformed. Double-check it against the shipping confirmation or missed-delivery card.
-- **A status logs "Unrecognised Slovenská Pošta status"** — please [open an issue](https://github.com/ha-parcel-integrations/ha-slovenska-posta/issues/new) with the logged line so the mapping can be extended.
+- **A status logs "Unrecognised Slovenská Pošta status"** — please [open an issue](https://github.com/ha-parcel-integrations/ha-slovenska-posta/issues/new?template=unrecognised_status.yml) with the logged line so the mapping can be extended.
 
 ## Related integrations
 
