@@ -337,14 +337,9 @@ def test_normalize_pickup_point_none_without_post_office():
     assert parcel["pickup_point"] is None
 
 
-def test_normalize_pickup_point_none_once_status_moves_past_pickup():
-    """`pickup_point` must not leak the *latest* event's own post office once
-
-    the parcel is no longer awaiting collection there — a real delivered
-    parcel's last event still carries `postOffice` (the delivering office,
-    not a pickup point); a real returned parcel's last event likewise
-    carries `postOffice` (the returning office, not the one it was
-    originally held at). Mirrors GLS/DHL-NL's `is_pickup`-gated field."""
+def test_normalize_pickup_stays_true_after_collection_and_names_the_notified_office():
+    """The point is the `notified` event's office, not the delivering office
+    carried by the newest event."""
     delivered = normalize_parcel(
         result(
             DELIVERED_CODE,
@@ -359,21 +354,22 @@ def test_normalize_pickup_point_none_once_status_moves_past_pickup():
                     "delivered",
                     "2026-04-28T15:52:17",
                     "Delivered to addressee",
-                    post_office={"name": "Bratislava 1"},
+                    post_office={"name": "Bratislava 7"},
                 ),
             ],
         )
     )
     assert delivered["status"] == ParcelStatus.DELIVERED
-    assert delivered["pickup"] is False
-    assert delivered["pickup_point"] is None
+    assert delivered["pickup"] is True
+    assert delivered["pickup_point"] == "Bratislava 1"
 
     returned_raw = returned_sample()
     returned_raw["events"][-1]["postOffice"] = {"name": "Bratislava 3"}
     returned = normalize_parcel(returned_raw)
     assert returned["status"] == ParcelStatus.RETURNING
-    assert returned["pickup"] is False
-    assert returned["pickup_point"] is None
+    assert returned["delivered"] is False
+    assert returned["pickup"] is True
+    assert returned["pickup_point"] == "Post Office Bratislava 1"
 
 
 # ---------------------------------------------------------------------------

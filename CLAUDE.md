@@ -38,13 +38,16 @@ Where this repo diverges from it, that is recorded below under
   summary+diagnostic sensors. Add a new non-parcel sensor's unique_id to the set.
 - **Per-parcel sensors are removed by the summary sensor** via
   `entity_registry.async_remove` (self-removal races and leaves ghosts).
-- **If this carrier can reach `ParcelStatus.AT_PICKUP_POINT` from a real raw
-  status/code**, it needs an `awaiting_pickup` sensor — see *Parcel contract*
-  in `CONVENTIONS.md`. Say "pickup point", not "ServicePoint"/"parcel
-  shop"/"locker", for the generic concept. `ha-dhl-nl`, `ha-dpd`, `ha-gls`,
-  `ha-inpost` are reference implementations; `slovenska_posta` here reaches
-  `AT_PICKUP_POINT` via the carrier's own `notified` state and has the
-  `awaiting_pickup` sensor.
+- **The pickup-point summaries are a pair.** A carrier that can deliver to a
+  pickup point or locker exposes both `en_route_to_pickup_point` and
+  `awaiting_pickup`, even before a real parcel has shown the status or flag
+  (they read 0 until then; record it in `PENDING_*`). A carrier without pickup
+  points exposes neither and keeps `pickup` constantly False.
+  See *Parcel contract* in `CONVENTIONS.md`. Say "pickup point", not
+  "ServicePoint"/"parcel shop"/"locker", for the generic concept; the
+  example carrier demonstrates both canonical sensors.
+  `slovenska_posta` here reaches `AT_PICKUP_POINT` via the carrier's own
+  `notified` state and has both pickup sensors.
 
 ## Carrier-specific notes
 
@@ -99,14 +102,20 @@ request (chunked above that). No account, no per-parcel HTTP round trip.
   accepts any non-empty code (control characters aside — stripped as garbage
   bytes, not a format-shape gate). The live check above is what actually
   enforces the real shape, deferring to the carrier instead of a local guess.
-- **`AT_PICKUP_POINT` is reachable** (`notified` → post-office hold), so this
-  carrier has the suite's standard `awaiting_pickup` sensor.
-- **`pickup_point` is gated on `status is AT_PICKUP_POINT`, not just "does
-  the latest event carry a `postOffice`"** — matching GLS/DHL-NL. A
-  delivered or returned parcel's last event still carries its own
-  `postOffice` (the delivering/returning office), which is not a place the
-  recipient can go collect anything; only the `notified` state's post office
-  is a real pickup point.
+- **`AT_PICKUP_POINT` is reachable** (`notified` -> post-office hold), so this
+  carrier has both pickup sensors, `awaiting_pickup` and
+  `en_route_to_pickup_point`. The carrier names a post office only on the
+  `notified` event, so `pickup` turns true at that event and
+  `en_route_to_pickup_point` stays 0 until a parcel shows a destination before
+  arrival; that destination field has not been seen on a real parcel.
+- **`pickup` is the route and stays true after collection.** It is true once
+  any event reached `notified`, also after the parcel is delivered or
+  returning. `pickup_point` is the post office of that `notified` event, never
+  the newest event's: a delivered or returned parcel's last event carries the
+  delivering or returning office, which is not a place to collect anything.
+- **`delivered` is `status is DELIVERED` only.** `returned` (back at the
+  sender) is not treated as terminal here: no real parcel has shown it yet, so
+  it stays an active `returning` parcel.
 - **Timestamps are Slovak local time, not UTC.** Every event's `localDate` is
   naive and carries no offset; `parcels.py`'s `parse_local_date` attaches
   `Europe/Bratislava` (DST-aware) rather than treating it as UTC like the
