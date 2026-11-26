@@ -389,12 +389,13 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
         event
         for event in events
         if isinstance(event, dict)
-        and _STATUS_MAP.get(event.get("stateCode")) is ParcelStatus.AT_PICKUP_POINT
+        and _STATUS_MAP.get(event.get("stateCode") or "")
+        is ParcelStatus.AT_PICKUP_POINT
     ]
     pickup = is_pickup(
         None,
         status,
-        (_STATUS_MAP.get(event.get("stateCode")) for event in pickup_events),
+        (_STATUS_MAP.get(event.get("stateCode") or "") for event in pickup_events),
     )
     pickup_event = _latest_event(pickup_events)
     pickup_office = ((pickup_event or {}).get("postOffice") or {}) if pickup else {}
