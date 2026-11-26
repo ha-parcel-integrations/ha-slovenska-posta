@@ -13,7 +13,7 @@ import logging
 
 import aiohttp
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
@@ -33,6 +33,7 @@ from .const import (
     STAGGER_MINUTES,
     ParcelStatus,
 )
+from .contents import ContentsStore
 from .parcels import apply_delivered_filter, normalize_parcel, sort_parcels_by_ts
 
 _LOGGER = logging.getLogger(__name__)
@@ -152,7 +153,12 @@ class SlovenskaPostaCoordinator(DataUpdateCoordinator[list[dict]]):
             update_interval=timedelta(minutes=HOT_INTERVAL_MINUTES),
         )
         self._client = client
+        self.contents_store = ContentsStore(hass, entry.entry_id)
         self.delivered: list[dict] = []
+        # id(published parcel) -> the code it was requested with: the contents
+        # store is keyed on the latter, and a response may carry another number
+        # or none at all.
+        self._parcel_codes: dict[int, str] = {}
         # tracking_code -> last successful raw result item, so a transient
         # fetch failure keeps the parcel visible instead of dropping its
         # sensor. Lives for the integration's lifetime (resets on restart).
@@ -185,6 +191,22 @@ class SlovenskaPostaCoordinator(DataUpdateCoordinator[list[dict]]):
         self._cached_device_id: str | None = None
         # Timestamp of the last successful poll (diagnostic sensor).
         self.last_success_time: datetime | None = None
+
+    def _apply_contents(self, parcel: dict, code: object) -> dict:
+        """Put the user's own contents text over the carrier's, when there is one."""
+        user_value = self.contents_store.get(code)
+        if user_value is not None:
+            parcel["contents"] = user_value
+        return parcel
+
+    @callback
+    def async_reapply_contents(self) -> None:
+        """Re-read the contents store into the published parcels, without a poll."""
+        for parcel in [*(self.data or []), *self.delivered]:
+            code = self._parcel_codes.get(id(parcel), parcel.get("barcode") or "")
+            parcel["contents"] = None
+            self._apply_contents(parcel, code)
+        self.async_update_listeners()
 
     @property
     def current_tier_minutes(self) -> int | None:
@@ -318,9 +340,15 @@ class SlovenskaPostaCoordinator(DataUpdateCoordinator[list[dict]]):
 
         include_history = self._include_history
         entries = [
-            (code, normalize_parcel(raw, include_history=include_history))
+            (
+                code,
+                self._apply_contents(
+                    normalize_parcel(raw, include_history=include_history), code
+                ),
+            )
             for code, raw in raws_by_code.items()
         ]
+        self._parcel_codes = {id(parcel): code for code, parcel in entries}
         active = [parcel for _, parcel in entries if not parcel["delivered"]]
         delivered = [parcel for _, parcel in entries if parcel["delivered"]]
         # Rebuilt fresh from this cycle's data — a code whose payload just

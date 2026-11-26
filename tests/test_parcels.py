@@ -193,6 +193,7 @@ CANONICAL_KEYS = [
     "barcode",
     "sender",
     "receiver",
+    "contents",
     "status",
     "raw_status",
     "delivered",
@@ -217,6 +218,7 @@ def test_normalize_publishes_exactly_the_canonical_keys():
 def test_capabilities_are_known_values():
     """A typo here would silently misreport this carrier on the docs site."""
     assert CAPABILITIES <= KNOWN_CAPABILITIES
+    assert KNOWN_CAPABILITIES - {"contents"} >= CAPABILITIES
 
 
 def test_capabilities_match_what_normalize_parcel_actually_returns():

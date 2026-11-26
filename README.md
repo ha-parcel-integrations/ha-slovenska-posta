@@ -37,6 +37,7 @@ A custom Home Assistant integration that tracks your [Slovenská Pošta](https:/
 - Per-parcel sensor with the canonical status (`registered` / `in_transit` / `at_pickup_point` / `delivered` / `returning` / …), the carrier's own status text and a tracking deep-link
 - Summary sensors: incoming parcels, awaiting pickup, recently delivered parcels
 - `slovenska_posta.track_parcel` / `slovenska_posta.untrack_parcel` services, so a dashboard button can add a parcel
+- A `contents` field on every parcel, set in your own words with the `slovenska_posta.update_contents` service or the `contents` field of `slovenska_posta.track_parcel`; it titles the calendar event and shows on the next-delivery sensor
 - Events + device triggers for no-code automations (parcel registered, status changed, delivered)
 - Opt-in per-parcel status history
 - Manual refresh button and a diagnostic last-update sensor
@@ -156,8 +157,9 @@ Every payload is the full normalised parcel plus the hub's `device_id`. Events a
 
 | Service | Fields | Description |
 |---|---|---|
-| `slovenska_posta.track_parcel` | `tracking_code` | Start tracking a parcel |
+| `slovenska_posta.track_parcel` | `tracking_code`, optional `contents` | Start tracking a parcel, optionally noting what is in it |
 | `slovenska_posta.untrack_parcel` | `tracking_code` | Stop tracking a parcel |
+| `slovenska_posta.update_contents` | `tracking_code`, `contents` (optional) | Set what is in a parcel, tracked or not; an empty `contents` clears it. It titles the calendar event and shows on the next-delivery sensor |
 
 ## Examples
 

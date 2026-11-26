@@ -88,6 +88,10 @@
         "tracking_code": {
           "name": "Podacie číslo",
           "description": "Podacie číslo Slovenskej Pošty."
+        },
+        "contents": {
+          "name": "Obsah",
+          "description": "Čo je v balíku, vlastnými slovami. Opätovné volanie pre sledovaný balík obsah nahradí; prázdny text ho vymaže."
         }
       }
     },
@@ -98,6 +102,20 @@
         "tracking_code": {
           "name": "Podacie číslo",
           "description": "Podacie číslo Slovenskej Pošty, ktoré sa má prestať sledovať."
+        }
+      }
+    },
+    "update_contents": {
+      "name": "Aktualizovať obsah balíka",
+      "description": "Nastavte vlastnými slovami, čo je v balíku s daným sledovacím číslom. Prázdny text obsah vymaže.",
+      "fields": {
+        "tracking_code": {
+          "name": "Podacie číslo",
+          "description": "Podacie číslo Slovenskej Pošty."
+        },
+        "contents": {
+          "name": "Obsah",
+          "description": "Čo je v balíku, vlastnými slovami. Prázdny text ho vymaže."
         }
       }
     }
